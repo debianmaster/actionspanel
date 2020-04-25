@@ -1,4 +1,4 @@
-FROM golang:1.14.2-alpine as backend
+FROM golang:1.14 as backend
 
 # Install dependencies
 WORKDIR /go/src/github.com/phunki/actionspanel
@@ -9,6 +9,7 @@ RUN go mod download
 WORKDIR /go/src/github.com/phunki/actionspanel
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
+RUN go test -race ./...
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/actionspanel cmd/actionspanel.go
 
 FROM scratch
