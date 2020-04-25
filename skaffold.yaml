@@ -12,4 +12,4 @@ portForward:
   - resourceType: service
     resourceName: actionspanel
     port: 8080
-    localPort: 8000
+    localPort: 8080

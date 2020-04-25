@@ -13,4 +13,5 @@ require (
 	github.com/rs/zerolog v1.18.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9 // indirect
 )
