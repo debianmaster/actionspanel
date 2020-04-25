@@ -1,0 +1,4 @@
+buttons:
+  - title: Release Actions Panel
+    action: "release"
+    description: Release a new version of Actions Panel
