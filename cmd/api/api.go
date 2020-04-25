@@ -1,11 +1,19 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	health "github.com/AppsFlyer/go-sundheit"
+	healthhttp "github.com/AppsFlyer/go-sundheit/http"
+	"github.com/julienschmidt/httprouter"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/phunki/actionspanel/pkg/config"
 	"github.com/phunki/actionspanel/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -21,12 +29,8 @@ var (
 	}
 )
 
-type environmentConfiguration struct {
-	APIPort int `default:"8080" envconfig:"api_port"`
-}
-
 func main() {
-	var cfg environmentConfiguration
+	var cfg config.Config
 
 	// Load environment variables
 	err := envconfig.Process("ap", &cfg)
@@ -37,16 +41,56 @@ func main() {
 
 	router := http.NewServeMux()
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(5 * time.Second)
 		w.Write([]byte("Hello World!"))
 	})
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.APIPort),
+		Addr:    fmt.Sprintf(":%d", cfg.ServerPort),
 		Handler: router,
 	}
 
-	log.Infof("Server is listening on port %d...", cfg.APIPort)
+	h := health.New()
+	healthRouter := httprouter.New()
+	healthRouter.HandlerFunc("GET", "/health", healthhttp.HandleHealthJSON(h))
+
+	healthSrv := &http.Server{
+		Handler: healthRouter,
+		Addr:    fmt.Sprintf(":%d", cfg.HealthServerPort),
+	}
+
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		signal.Notify(sigint, syscall.SIGTERM)
+
+		<-sigint
+		healthSrv.Shutdown(context.Background())
+		srv.Shutdown(context.Background())
+		close(idleConnsClosed)
+	}()
+
+	go func() {
+		log.Infof("Starting health server on port %d...", cfg.HealthServerPort)
+		if err := healthSrv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Infof("Failed to shutdown health server gracefully: %v", err)
+		}
+		log.Infof("Shutting down health server...")
+	}()
+
+	livenessFile, err := os.Create("/livemarker")
+	if err != nil {
+		log.Infof("failed to create liveness marker: %v", err)
+		os.Exit(1)
+	}
+	defer os.Remove(livenessFile.Name())
+
+	log.Infof("Server is listening on port %d...", cfg.ServerPort)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Err(err, "couldn't shutdown cleanly")
 	}
+
+	<-idleConnsClosed
+	log.Infof("Shutting down server...")
 }

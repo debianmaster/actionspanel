@@ -11,5 +11,5 @@ deploy:
 portForward:
   - resourceType: service
     resourceName: actionspanel
-    port: 80
+    port: 8080
     localPort: 8000
