@@ -1,5 +1,5 @@
 # actionspanel
-[!Test Actions Panel](https://github.com/phunki/actionspanel/workflows/Test%20Actions%20Panel/badge.svg)](https://github.com/phunki/actionspanel/actions?query=workflow%3A%22Release+Actions+Panel%22)
+[![Test Actions Panel](https://github.com/phunki/actionspanel/workflows/Test%20Actions%20Panel/badge.svg)](https://github.com/phunki/actionspanel/actions?query=workflow%3A%22Release+Actions+Panel%22)
 [![Actions Panel](https://img.shields.io/badge/actionspanel-enabled-brightgreen)](https://www.actionspanel.app/app/phunki/actionspanel)
 [![Go Report Card](https://goreportcard.com/badge/github.com/phunki/actionspanel)](https://goreportcard.com/report/github.com/phunki/actionspanel)
 [![Docs](https://godoc.org/github.com/phunki/actionspanel?status.svg)](https://pkg.go.dev/github.com/phunki/actionspanel?tab=doc)
