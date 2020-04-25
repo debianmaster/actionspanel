@@ -8,3 +8,8 @@ deploy:
   kubectl:
     manifests:
       - ./hack/local-k8s-manifests/*
+portForward:
+  - resourceType: service
+    resourceName: actionspanel
+    port: 80
+    localPort: 8000

@@ -4,6 +4,9 @@ kind: Deployment
 metadata:
   name: actionspanel
 spec:
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
   replicas: 1
   selector:
     matchLabels:
