@@ -5,6 +5,8 @@
 [![Docs](https://godoc.org/github.com/phunki/actionspanel?status.svg)](https://pkg.go.dev/github.com/phunki/actionspanel?tab=doc)
 [![codecov](https://codecov.io/gh/phunki/actionspanel/branch/master/graph/badge.svg)](https://codecov.io/gh/phunki/actionspanel)
 [![license](https://img.shields.io/github/license/phunki/actionspanel.svg)](https://github.com/phunki/actionspanel/blob/master/LICENSE)
+[![release](https://img.shields.io/github/release/phunki/actionspanel.svg)](https://github.com/phunki/actionspanel/releases/latest)
+[![GitHub release date](https://img.shields.io/github/release-date/phunki/actionspanel.svg)](https://github.com/phunki/actionspanel/releases)
 
 Manually trigger your GitHub Actions
 
