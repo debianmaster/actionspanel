@@ -12,8 +12,9 @@ import (
 	health "github.com/AppsFlyer/go-sundheit"
 	healthhttp "github.com/AppsFlyer/go-sundheit/http"
 	"github.com/julienschmidt/httprouter"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/palantir/go-githubapp/githubapp"
 	"github.com/phunki/actionspanel/pkg/config"
+	"github.com/phunki/actionspanel/pkg/gh"
 	"github.com/phunki/actionspanel/pkg/log"
 	"github.com/spf13/cobra"
 )
@@ -30,17 +31,18 @@ var (
 )
 
 func main() {
-	var cfg config.Config
 
-	// Load environment variables
-	err := envconfig.Process("ap", &cfg)
-	if err != nil {
-		log.Err(err, "couldn't load config")
-		os.Exit(1)
-	}
+	cfg := config.NewConfig()
+	githubConfig := gh.NewGitHubConfig(cfg)
+	githubClientCreator := gh.NewGitHubClientCreator(cfg)
 
-	router := http.NewServeMux()
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	installationHandler := gh.NewInstallationHandler(githubClientCreator)
+	webhookHandler := githubapp.NewDefaultEventDispatcher(githubConfig, installationHandler)
+
+	router := httprouter.New()
+	router.Handler("POST", "/webhook", webhookHandler)
+
+	router.HandlerFunc("GET", "/", func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(5 * time.Second)
 		w.Write([]byte("Hello World!"))
 	})

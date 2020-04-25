@@ -19,6 +19,9 @@ spec:
       containers:
         - name: actionspanel
           image: phunki/actionspanel
+          envFrom:
+            - configMapRef:
+                name: actionspanel
           ports:
             - name: http
               containerPort: 8080
