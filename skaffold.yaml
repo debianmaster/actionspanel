@@ -1,0 +1,10 @@
+apiVersion: skaffold/v2beta2
+kind: Config
+build:
+  artifacts:
+  - image: phunki/actionspanel
+    context: .
+deploy:
+  kubectl:
+    manifests:
+      - ./hack/local-k8s-manifests/*
