@@ -5,23 +5,23 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Set up Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: '1.14'
-    - name: Run tests
-      run: |
-        go test -race -coverprofile=coverage.out -covermode=atomic -coverpkg=./... ./...
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.out
-  docker_build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
-    - name: Build Docker image
-      run: |
-        docker build .
+      - uses: actions/checkout@master
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.14'
+      - name: Run tests
+        run: |
+          go test -race -coverprofile=coverage.out -covermode=atomic -coverpkg=./... ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.out
+    docker_build:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@master
+      - name: Build Docker image
+        run: |
+          docker build .
