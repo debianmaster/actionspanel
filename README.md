@@ -10,6 +10,7 @@
 ![Docker Cloud Automated build](https://img.shields.io/docker/cloud/automated/phunki/actionspanel)
 ![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/phunki/actionspanel?sort=semver)
 ![Docker Pulls](https://img.shields.io/docker/pulls/phunki/actionspanel)
+[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=phunki/actionspanel)](https://dependabot.com)
 [![license](https://img.shields.io/github/license/phunki/actionspanel.svg)](https://github.com/phunki/actionspanel/blob/master/LICENSE)
 
 Manually trigger your GitHub Actions
