@@ -42,7 +42,10 @@ func main() {
 	router.Handler("POST", "/webhook", webhookHandler)
 
 	router.HandlerFunc("GET", "/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World!"))
+		_, err := w.Write([]byte("Hello World!"))
+		if err != nil {
+			log.Err(err, "failed to write response")
+		}
 	})
 
 	srv := &http.Server{
@@ -66,8 +69,14 @@ func main() {
 		signal.Notify(sigint, syscall.SIGTERM)
 
 		<-sigint
-		healthSrv.Shutdown(context.Background())
-		srv.Shutdown(context.Background())
+		err := healthSrv.Shutdown(context.Background())
+		if err != nil {
+			log.Err(err, "couldn't shutdown health server")
+		}
+		err = srv.Shutdown(context.Background())
+		if err != nil {
+			log.Err(err, "couldn't shutdown server")
+		}
 		close(idleConnsClosed)
 	}()
 
