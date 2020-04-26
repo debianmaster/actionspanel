@@ -36,5 +36,5 @@ spec:
           livenessProbe:
             exec:
               command:
-              - /go/bin/actionspanel
-              - live
+                - /go/bin/actionspanel
+                - live
