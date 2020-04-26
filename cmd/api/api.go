@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	health "github.com/AppsFlyer/go-sundheit"
 	healthhttp "github.com/AppsFlyer/go-sundheit/http"
@@ -43,7 +42,6 @@ func main() {
 	router.Handler("POST", "/webhook", webhookHandler)
 
 	router.HandlerFunc("GET", "/", func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(5 * time.Second)
 		w.Write([]byte("Hello World!"))
 	})
 
