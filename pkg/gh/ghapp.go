@@ -19,6 +19,7 @@ func NewGitHubClientCreator(cfg config.Config) githubapp.ClientCreator {
 		githubapp.WithClientUserAgent("actionspanel/0.0.0"),
 		githubapp.WithClientCaching(false, func() httpcache.Cache { return httpcache.NewMemoryCache() }),
 	)
+
 	return githubClientCreator
 }
 
@@ -48,6 +49,8 @@ func (h InstallationHandler) Handle(ctx context.Context, eventType, deliveryID s
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return errors.Wrap(err, "failed to parse installation event")
 	}
+
 	log.Info("Received an installation event")
+
 	return nil
 }

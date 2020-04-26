@@ -1,3 +1,6 @@
+// Package api is the package that houses our api application
+//
+// This is where we configure and instantiate our running web application service.
 package api
 
 import (
@@ -18,26 +21,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// Cmd is the exported cobra command which starts the webhook handler service
-	Cmd = &cobra.Command{
+const shutddownSignalBufferSize = 1
+
+// Cmd is the exported cobra command which starts the webhook handler service
+func Cmd() *cobra.Command {
+	return &cobra.Command{
 		Use:   "api",
 		Short: "Runs the web service that runs our web api for handling GitHub events",
 		Run: func(cmd *cobra.Command, args []string) {
 			main()
 		},
 	}
-)
+}
 
-func main() {
+func newHealthServer(cfg config.Config) *http.Server {
+	h := health.New()
+	healthRouter := httprouter.New()
+	healthRouter.HandlerFunc("GET", "/health", healthhttp.HandleHealthJSON(h))
 
-	cfg := config.NewConfig()
+	return &http.Server{
+		Handler: healthRouter,
+		Addr:    fmt.Sprintf(":%d", cfg.HealthServerPort),
+	}
+}
+
+func newServer(cfg config.Config) *http.Server {
 	githubConfig := gh.NewGitHubConfig(cfg)
 	githubClientCreator := gh.NewGitHubClientCreator(cfg)
 
 	installationHandler := gh.NewInstallationHandler(githubClientCreator)
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubConfig, installationHandler)
-
 	router := httprouter.New()
 	router.Handler("POST", "/webhook", webhookHandler)
 
@@ -48,54 +61,66 @@ func main() {
 		}
 	})
 
-	srv := &http.Server{
+	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.ServerPort),
 		Handler: router,
 	}
+}
 
-	h := health.New()
-	healthRouter := httprouter.New()
-	healthRouter.HandlerFunc("GET", "/health", healthhttp.HandleHealthJSON(h))
+func waitForShutdown(healthSrv *http.Server, srv *http.Server, idleConnsClosed chan struct{}) {
+	sigint := make(chan os.Signal, shutddownSignalBufferSize)
 
-	healthSrv := &http.Server{
-		Handler: healthRouter,
-		Addr:    fmt.Sprintf(":%d", cfg.HealthServerPort),
+	signal.Notify(sigint, os.Interrupt)
+	signal.Notify(sigint, syscall.SIGTERM)
+
+	<-sigint
+
+	err := healthSrv.Shutdown(context.Background())
+	if err != nil {
+		log.Err(err, "couldn't shutdown health server")
 	}
 
-	idleConnsClosed := make(chan struct{})
-	go func() {
-		sigint := make(chan os.Signal, 1)
-		signal.Notify(sigint, os.Interrupt)
-		signal.Notify(sigint, syscall.SIGTERM)
+	err = srv.Shutdown(context.Background())
+	if err != nil {
+		log.Err(err, "couldn't shutdown server")
+	}
 
-		<-sigint
-		err := healthSrv.Shutdown(context.Background())
-		if err != nil {
-			log.Err(err, "couldn't shutdown health server")
-		}
-		err = srv.Shutdown(context.Background())
-		if err != nil {
-			log.Err(err, "couldn't shutdown server")
-		}
-		close(idleConnsClosed)
-	}()
+	close(idleConnsClosed)
+}
+
+func main() {
+	cfg := config.NewConfig()
+	healthSrv := newHealthServer(cfg)
+	srv := newServer(cfg)
+	idleConnsClosed := make(chan struct{})
+
+	go waitForShutdown(healthSrv, srv, idleConnsClosed)
 
 	go func() {
 		log.Infof("Starting health server on port %d...", cfg.HealthServerPort)
+
 		if err := healthSrv.ListenAndServe(); err != http.ErrServerClosed {
 			log.Infof("Failed to shutdown health server gracefully: %v", err)
 		}
+
 		log.Infof("Shutting down health server...")
 	}()
 
 	livenessFile, err := os.Create("/livemarker")
 	if err != nil {
 		log.Infof("failed to create liveness marker: %v", err)
-		os.Exit(1)
+		panic("Couldn't create liveness marker")
 	}
-	defer os.Remove(livenessFile.Name())
+
+	defer func() {
+		err := os.Remove(livenessFile.Name())
+		if err != nil {
+			log.Err(err, "Failed to remove liveness marker")
+		}
+	}()
 
 	log.Infof("Server is listening on port %d...", cfg.ServerPort)
+
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Err(err, "couldn't shutdown cleanly")
 	}

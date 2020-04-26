@@ -1,13 +1,9 @@
+// Package log is where we abstract away log functionality
 package log
 
 import (
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
-
-func init() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-}
 
 // Info prints a message at the info level
 func Info(format string) {

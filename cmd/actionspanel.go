@@ -16,9 +16,10 @@ func main() {
 		}
 	)
 
-	rootCmd.AddCommand(api.Cmd)
-	rootCmd.AddCommand(live.Cmd)
-	rootCmd.AddCommand(sleep.Cmd)
+	rootCmd.AddCommand(api.Cmd())
+	rootCmd.AddCommand(live.Cmd())
+	rootCmd.AddCommand(sleep.Cmd())
+
 	err := rootCmd.Execute()
 	if err != nil {
 		log.Err(err, "failed to execute rootCmd")

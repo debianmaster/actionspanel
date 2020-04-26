@@ -1,8 +1,8 @@
-name: Run reviewdog
+name: Run golangci
 on: [pull_request]
 
 jobs:
-  reviewdog:
+  golangci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -11,8 +11,4 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-check
-      - name: hadolint
-        uses: reviewdog/action-hadolint@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-check
+          golangci_lint_flags: "--enable-all --exclude-use-default=false"
