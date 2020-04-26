@@ -9,6 +9,9 @@ RUN go mod download
 WORKDIR /go/src/github.com/phunki/actionspanel
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
+COPY ./mock ./mock
+RUN go get github.com/golang/mock/mockgen
+RUN go generate ./...
 RUN go test -race ./...
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/actionspanel cmd/actionspanel.go
 

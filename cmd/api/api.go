@@ -49,10 +49,14 @@ func newServer(cfg config.Config) *http.Server {
 	githubConfig := gh.NewGitHubConfig(cfg)
 	githubClientCreator := gh.NewGitHubClientCreator(cfg)
 
+	sessionManager := config.NewSessionManagerFactory(cfg).CreateSessionManager()
+	loginHandler := gh.NewLoginHandler(sessionManager, true, githubConfig).NewOAuthHandler()
+
 	installationHandler := gh.NewInstallationHandler(githubClientCreator)
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubConfig, installationHandler)
 	router := httprouter.New()
 	router.Handler("POST", "/webhook", webhookHandler)
+	router.Handler("GET", "/api/auth/github", loginHandler)
 
 	router.HandlerFunc("GET", "/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("Hello World!"))

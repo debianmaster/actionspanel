@@ -4,6 +4,8 @@ go 1.14
 
 require (
 	github.com/AppsFlyer/go-sundheit v0.1.1
+	github.com/alexedwards/scs v1.4.1
+	github.com/golang/mock v1.4.3
 	github.com/google/go-github/v30 v30.1.0
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/julienschmidt/httprouter v1.3.0
@@ -13,5 +15,6 @@ require (
 	github.com/rs/zerolog v1.18.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9 // indirect
 )

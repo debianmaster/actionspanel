@@ -7,7 +7,7 @@ spec:
   strategy:
     rollingUpdate:
       maxUnavailable: 0
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: actionspanel
