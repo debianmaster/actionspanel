@@ -50,7 +50,7 @@ func newServer(cfg config.Config) *http.Server {
 	githubClientCreator := gh.NewGitHubClientCreator(cfg)
 
 	sessionManager := config.NewSessionManagerFactory(cfg).CreateSessionManager()
-	loginHandler := gh.NewLoginHandler(sessionManager, true, githubConfig).NewOAuthHandler()
+	loginHandler := gh.NewLoginHandler(sessionManager, true, githubConfig, githubClientCreator)
 
 	installationHandler := gh.NewInstallationHandler(githubClientCreator)
 	webhookHandler := githubapp.NewDefaultEventDispatcher(githubConfig, installationHandler)

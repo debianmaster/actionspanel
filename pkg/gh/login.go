@@ -12,29 +12,16 @@ import (
 	"github.com/phunki/actionspanel/pkg/log"
 )
 
-// LoginHandler creates a GitHub oauth2 handler. It's convenience more than
-// anything.
-type LoginHandler struct {
-	sessionManager *scs.Manager
-	tls            bool
-	githubConfig   githubapp.Config
-}
-
 // NewLoginHandler creates a new GitHub oauth2 handler
-func NewLoginHandler(sessionManager *scs.Manager, tls bool, githubConfig githubapp.Config) LoginHandler {
-	return LoginHandler{sessionManager: sessionManager, tls: tls, githubConfig: githubConfig}
-}
-
-// NewOAuthHandler returns a new handler that we can register to handle an OAuth flow
-func (h LoginHandler) NewOAuthHandler() http.Handler {
+func NewLoginHandler(sessionManager *scs.Manager, tls bool, githubConfig githubapp.Config, clientCreator ClientCreator) http.Handler {
 	return oauth2.NewHandler(
-		oauth2.GetConfig(h.githubConfig, nil),
+		oauth2.GetConfig(githubConfig, nil),
 		// force generated URLs to use HTTPS; useful if the app is behind a reverse proxy
-		oauth2.ForceTLS(h.tls),
+		oauth2.ForceTLS(tls),
 		// set the callback for successful logins
-		oauth2.OnLogin(h.onLogin),
-		oauth2.OnError(h.onError),
-		oauth2.WithStore(&oauth2.SessionStateStore{Sessions: h.sessionManager}),
+		oauth2.OnLogin(NewOnLoginCallback(sessionManager, clientCreator)),
+		oauth2.OnError(NewOnErrorCallback()),
+		oauth2.WithStore(&oauth2.SessionStateStore{Sessions: sessionManager}),
 	)
 }
 
@@ -63,41 +50,55 @@ func MapInstallationIDs(appsService AppsService) (map[string]int64, error) {
 	return installationMap, nil
 }
 
-func (h LoginHandler) onLogin(w http.ResponseWriter, r *http.Request, login *oauth2.Login) {
-	log.Info("Handling a new oauth login")
+// NewOnLoginCallback returns a function that satisfies an oauth login callback
+func NewOnLoginCallback(sessionManager *scs.Manager, clientCreator ClientCreator) oauth2.LoginCallback {
+	return func(w http.ResponseWriter, r *http.Request, login *oauth2.Login) {
+		log.Info("Handling a new oauth login")
 
-	session := h.sessionManager.Load(r)
-	client := github.NewClient(login.Client)
-	installationMap, err := MapInstallationIDs(client.Apps)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		session := sessionManager.Load(r)
 
-	// Reset installation map
-	err = session.Remove(w, constants.InstallationMap)
-	if err != nil {
-		log.Err(err, "failed to clear installation map from session")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		client, err := clientCreator.NewTokenClient(login.Token.AccessToken)
+		if err != nil {
+			log.Err(err, "couldn't create client")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	err = session.PutObject(w, constants.InstallationMap, installationMap)
-	if err != nil {
-		log.Err(err, "failed to put installation map into session")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+		installationMap, err := MapInstallationIDs(client.Apps)
+		if err != nil {
+			log.Err(err, "couldn't create installation ID map")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-	err = session.PutString(w, constants.AccessToken, login.Token.AccessToken)
-	if err != nil {
-		log.Err(err, "failed to put access token into session")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		// Reset installation map
+		err = session.Remove(w, constants.InstallationMap)
+		if err != nil {
+			log.Err(err, "failed to clear installation map from session")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = session.PutObject(w, constants.InstallationMap, installationMap)
+		if err != nil {
+			log.Err(err, "failed to put installation map into session")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		err = session.PutString(w, constants.AccessToken, login.Token.AccessToken)
+		if err != nil {
+			log.Err(err, "failed to put access token into session")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
-func (h LoginHandler) onError(w http.ResponseWriter, r *http.Request, err error) {
-	log.Infof("Attempted url: %v", r.URL)
-	log.Err(err, "couldn't login")
+// NewOnErrorCallback returns a function that satisfies an oauth failure callback
+func NewOnErrorCallback() oauth2.ErrorCallback {
+	return func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Infof("Attempted url: %v", r.URL)
+		log.Err(err, "couldn't login")
+	}
 }
