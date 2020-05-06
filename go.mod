@@ -3,7 +3,7 @@ module github.com/phunki/actionspanel
 go 1.14
 
 require (
-	github.com/AppsFlyer/go-sundheit v0.1.1
+	github.com/AppsFlyer/go-sundheit v0.2.0
 	github.com/alexedwards/scs v1.4.1
 	github.com/golang/mock v1.4.3
 	github.com/google/go-github/v30 v30.1.0
